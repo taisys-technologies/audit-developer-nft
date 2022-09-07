@@ -95,30 +95,37 @@ contract DeveloperNFT is
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
+    /// @return signerAddress address - address who can sign for mint
     function signerAddress() external view returns (address) {
         return ERC721AStorageCustom.layout()._signerAddress;
     }
 
+    /// @return price uint256 - price of NFT
     function price() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._price;
     }
 
+    /// @return paymentContract address - ERC20 which is payment token for buying NFT
     function paymentContract() external view returns (address) {
         return ERC721AStorageCustom.layout()._paymentContract;
     }
 
+    /// @return maxTokenSupply uint256 - total NFT supply of this contract
     function maxTokenSupply() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._maxTokenSupply;
     }
 
+    /// @return periodTokenSupply uint256 - NFT supply of current period
     function periodTokenSupply() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._periodTokenSupply;
     }
 
+    /// @return totalMinted uint256 - the total amount of tokens minted in this contract
     function totalMinted() public view returns (uint256) {
         return _totalMinted();
     }
 
+    /// @return periodMinted uint256 - the total amount of tokens minted in current period
     function periodMinted() external view returns (uint256) {
         return
             totalMinted() -
@@ -126,6 +133,13 @@ contract DeveloperNFT is
                 ERC721AStorageCustom.layout()._periodTokenSupply);
     }
 
+    /// mint 1 NFT with signature signed by signerAddress
+    ///
+    /// @param uuid string - unique uuid
+    /// @param userAddress address - address which mint NFT
+    /// @param deadline uint256 - this signature's deadline
+    /// @param uri string - uri of NFT
+    /// @param signature bytes - signature signed by signerAddress with all above data
     function checkTokenAndMint(
         string calldata uuid,
         address userAddress,
@@ -137,6 +151,13 @@ contract DeveloperNFT is
         _mint(1, uri);
     }
 
+    /**
+     * Admin Functions
+     */
+
+    /// Admin can change the signerAddress who can sign the signature for minting NFT
+    ///
+    /// @param newSignerAddress address - new signer address
     function setSignerAddress(address newSignerAddress)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -149,6 +170,9 @@ contract DeveloperNFT is
         emit SetSignerAddress(newSignerAddress);
     }
 
+    /// Admin can modify maxTokenSupply of this contract before the NFTs start to be sold
+    ///
+    /// @param newMaxToken uint256 - new maximum token supply
     function setMaxTokenSupply(uint256 newMaxToken)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -162,6 +186,9 @@ contract DeveloperNFT is
         emit SetMaxTokenSupply(newMaxToken);
     }
 
+    /// set up the NFT supply of next period
+    ///
+    /// @param perToken uint256 - token supply of the next period
     function setPeriodTokenSupply(uint256 perToken)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -186,12 +213,19 @@ contract DeveloperNFT is
         emit PeriodTokenSupply(perToken);
     }
 
+    /// set up the price of each NFT
+    ///
+    /// @param newPrice uint256 - new price
     function setPrice(uint256 newPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(newPrice > 0, "ERC721A: price cannot smaller than 0");
         ERC721AStorageCustom.layout()._price = newPrice;
         emit SetPrice(newPrice);
     }
 
+    /// Admin can withdraw ERC20(paymentContract) which are from selling NFT
+    ///
+    /// @param to address - address who can get ERC20
+    /// @param amount uint256 - amount of ERC20
     function withdraw(address to, uint256 amount)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -200,10 +234,12 @@ contract DeveloperNFT is
             .safeTransfer(to, amount);
     }
 
+    /// Admin triggers stopped state
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
+    /// Admin returns to normal state.
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
@@ -212,6 +248,13 @@ contract DeveloperNFT is
      * Internal Functions
      */
 
+    /// check the signature is sign by signerAddress
+    ///
+    /// @param uuid string - unique uuid
+    /// @param userAddress address - address which mint NFT
+    /// @param deadline uint256 - this signature's deadline
+    /// @param uri string - uri of NFT
+    /// @param signature bytes - signature signed by signerAddress with all above data
     function _checkToken(
         string calldata uuid,
         address userAddress,
@@ -246,6 +289,10 @@ contract DeveloperNFT is
         ERC721AStorageCustom.layout()._usedUUID[uuid] = true;
     }
 
+    /// mint NFT to msgSender
+    ///
+    /// @param quantity uint256 - amount of NFT to be minted
+    /// @param uri string - uri of NFT
     function _mint(uint256 quantity, string calldata uri) internal {
         uint256 cur = ERC721AStorage.layout()._currentIndex;
         require(
